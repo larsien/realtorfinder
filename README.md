@@ -24,9 +24,9 @@ and the English privacy/support copy are inline in `build.mjs`.
   the `robots.txt`/`Sitemap:` directive sits under `/realtorfinder/` and isn't read
   from the host root; a custom domain or root repo fixes that).
 
-Known debt: privacy/support/landing bodies are English on non-English locales
-(lang attr then mismatches content). Localize the `*Body` functions + the `faq`
-array per `m.lang` when translations exist.
+Bodies, FAQ, nav, and privacy/support copy are localized per base language via
+the `STR` table (en/es/vi/zh/ar/bs); `en` is the fallback for the English markets.
+The root language picker stays English (it's the `x-default`).
 
 ## Deploy (free, GitHub Pages)
 
@@ -42,8 +42,6 @@ array per `m.lang` when translations exist.
 
 - Replace the App Store Connect privacy-policy URL per app with the matching
   `…/<market>/privacy.html` (currently points at boorini's page).
-- Localize the privacy/support bodies (today English). Swap `privacyBody` /
-  `supportBody` in `build.mjs`, or feed translations from StorePilot.
 
 ## URL shape
 
