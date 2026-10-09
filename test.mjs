@@ -21,4 +21,15 @@ assert.ok(html.includes(`id${markets[0].appleId}`), 'App Store link');
 const sm = await readFile(new URL('./sitemap.xml', dist), 'utf8');
 assert.equal((sm.match(/<loc>/g) || []).length, 1 + markets.length * 3, 'sitemap url count');
 
+// JSON-LD: landing has SoftwareApplication, support has FAQPage
+assert.ok(html.includes('"SoftwareApplication"'), 'landing SoftwareApplication JSON-LD');
+const sup = await readFile(new URL(`./${markets[0].id}/support.html`, dist), 'utf8');
+assert.ok(sup.includes('"FAQPage"') && sup.includes('"Question"'), 'support FAQPage JSON-LD');
+// x-default on index points to the site root, not a locale landing page
+const xdef = html.match(/hreflang="x-default" href="([^"]+)"/)[1];
+assert.ok(/\/realtorfinder\/$/.test(xdef), `x-default -> root, got ${xdef}`);
+// llms.txt generated and lists every market
+const ll = await readFile(new URL('./llms.txt', dist), 'utf8');
+for (const m of markets) assert.ok(ll.includes(`id${m.appleId}`), `llms.txt lists ${m.id}`);
+
 console.log('ok: build output valid');

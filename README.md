@@ -7,12 +7,26 @@ market with `hreflang` alternates + a sitemap.
 ## Build
 
 ```sh
-node build.mjs   # -> dist/ (45 files: 14 markets x 3 pages + root + sitemap + robots)
+node build.mjs   # -> dist/ (14 markets x 3 pages + root + sitemap + robots + llms.txt)
 node test.mjs    # sanity check on dist/
 ```
 
 No dependencies (Node 18+). Content lives in `data/markets.json`; page templates
 and the English privacy/support copy are inline in `build.mjs`.
+
+## SEO / AEO built in
+
+- `hreflang` alternates (14 + `x-default` → root) and self-canonical per page.
+- JSON-LD: `SoftwareApplication` (landing, with App Store link), `FAQPage` (support,
+  single-sourced with the visible FAQ), `WebSite` + `ItemList` (root).
+- `llms.txt`, Open Graph tags, AI-crawler `robots.txt` allow blocks.
+- `sitemap.xml` — submit it in **Google Search Console** (on a Pages *project* site
+  the `robots.txt`/`Sitemap:` directive sits under `/realtorfinder/` and isn't read
+  from the host root; a custom domain or root repo fixes that).
+
+Known debt: privacy/support/landing bodies are English on non-English locales
+(lang attr then mismatches content). Localize the `*Body` functions + the `faq`
+array per `m.lang` when translations exist.
 
 ## Deploy (free, GitHub Pages)
 

@@ -1,10 +1,12 @@
 // Static multi-locale site generator for Realtor Finder landing/privacy/support.
 // No deps. `node build.mjs` -> dist/. Each market gets /<id>/{index,privacy,support}.html
-// with hreflang alternates + a sitemap, so Google indexes every locale.
+// with hreflang alternates + canonical + JSON-LD, plus sitemap/robots/llms.txt, so both
+// Google and AI engines index & cite every locale.
 //
-// ponytail: English body for privacy/support across markets (a legal page in English
-// is App-Store-acceptable as a start). Localize per-market via data/markets.json taglines
-// now; translate bodies later (StorePilot) by swapping the two renderBody* functions.
+// ponytail: privacy/support/landing bodies are English on non-English pages (lang attr
+// then mismatches content). Accurate but a known SEO cap — localize the render*Body
+// functions + the FAQ array per m.lang when translations exist (StorePilot). Taglines,
+// app names, region, and FAQ answers are the single source to translate.
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 
 const { baseUrl, contactEmail, markets } = JSON.parse(
@@ -13,35 +15,49 @@ const { baseUrl, contactEmail, markets } = JSON.parse(
 const BASE = baseUrl.replace(/\/$/, '');
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const appUrl = (m) => `https://apps.apple.com/app/id${m.appleId}`;
+const ld = (obj) => `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
+const ORG = { '@type': 'Organization', name: 'kahvilavalas', url: `${BASE}/`, email: contactEmail };
 
 // hreflang alternates for one page kind ('', 'privacy', 'support'), shared by every market.
+// x-default: index -> root picker; privacy/support -> the generic English (af) page.
 function alternates(kind) {
   const path = (m) => `${BASE}/${m.id}/${kind ? kind + '.html' : ''}`;
   const links = markets.map(
     (m) => `  <link rel="alternate" hreflang="${m.hreflang}" href="${path(m)}">`,
   );
-  links.push(`  <link rel="alternate" hreflang="x-default" href="${BASE}/${markets[0].id}/${kind ? kind + '.html' : ''}">`);
+  const xdef = kind ? `${BASE}/af/${kind}.html` : `${BASE}/`;
+  links.push(`  <link rel="alternate" hreflang="x-default" href="${xdef}">`);
   return links.join('\n');
 }
 
-function page({ m, kind, title, desc, body }) {
-  const canonical = `${BASE}/${m.id}/${kind ? kind + '.html' : ''}`;
-  return `<!doctype html>
-<html lang="${m.lang}" dir="${m.dir}">
-<head>
-<meta charset="utf-8">
+function head({ m, kind, title, desc, canonical, jsonld }) {
+  return `<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${canonical}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:url" content="${canonical}">
+<meta name="twitter:card" content="summary">
 ${alternates(kind)}
+${jsonld ? jsonld.map(ld).join('\n') : ''}`;
+}
+
+function page({ m, kind, title, desc, body, jsonld }) {
+  const canonical = `${BASE}/${m.id}/${kind ? kind + '.html' : ''}`;
+  return `<!doctype html>
+<html lang="${m.lang}" dir="${m.dir}">
+<head>
+${head({ m, kind, title, desc, canonical, jsonld })}
 <style>
   :root { --fg:#111; --muted:#555; --bg:#fff; --accent:#0a7cff; --card:#f5f6f8; }
   @media (prefers-color-scheme: dark){ :root:not([data-theme=light]){ --fg:#eee; --muted:#aaa; --bg:#111; --card:#1c1d21; } }
   *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);
     font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   main{max-width:720px;margin:0 auto;padding:48px 16px}
-  h1{font-size:1.9rem;line-height:1.2;margin:0 0 .3em} h2{margin:1.6em 0 .4em}
+  h1{font-size:1.9rem;line-height:1.2;margin:0 0 .3em} h2{margin:1.6em 0 .4em} h3{margin:1.4em 0 .2em}
   .tag{color:var(--muted);font-size:1.15rem;margin:0 0 1.5em}
   a{color:var(--accent)} .muted{color:var(--muted)}
   .cta{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
@@ -66,12 +82,42 @@ ${body}
 `;
 }
 
+// --- FAQ: single source -> visible <h3> HTML + FAQPage JSON-LD (no drift) ---
+const faq = (m) => [
+  ['Do I need an account?', 'No. There is no login or sign-up.'],
+  ['Is it free?', 'Yes, it is free and contains no ads.'],
+  ['Is my data stored?', 'No. Everything runs on your device; nothing is kept on a server.'],
+  ['Who sends the messages?', 'You do, from your own device. The app only pre-fills them.'],
+  ['Which region does this app cover?', `This version covers ${m.region}. Other regions have their own version — see All regions.`],
+  ['How do I contact several agents at once?', 'Select the agents you want from the search results; the app opens your default Messages app with all their numbers pre-filled (group SMS).'],
+];
+const faqHtml = (m) => faq(m).map(([q, a]) => `<h3>${esc(q)}</h3>\n<p>${esc(a)}</p>`).join('\n');
+const faqLd = (m) => ({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq(m).map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+});
+
+const softwareLd = (m) => ({
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: m.appName,
+  description: `Search public real-estate listings by area and contact several agents at once in ${m.region}. No account, nothing stored on any server, no ads.`,
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'iOS',
+  url: `${BASE}/${m.id}/`,
+  downloadUrl: appUrl(m),
+  inLanguage: m.hreflang,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: ORG,
+});
+
 const landingBody = (m) => `<h1>${esc(m.appName)}</h1>
 <p class="tag">${esc(m.tagline)}</p>
 <a class="cta" href="${appUrl(m)}">Download on the App Store</a>
 <h2>What it does</h2>
-<p>Search public real-estate listings by area, then contact several agents at once —
-the app opens your phone's default messaging app with the agents' numbers pre-filled.
+<p>Search public real-estate listings by area in ${esc(m.region)}, then contact several agents
+at once — the app opens your phone's default messaging app with the agents' numbers pre-filled.
 No account, no sign-up, nothing stored on any server.</p>
 <ul>
   <li>Search agents by apartment or area name</li>
@@ -105,33 +151,39 @@ const supportBody = (m) => `<h1>Support — ${esc(m.appName)}</h1>
   <li>Tap to open your default Messages / phone / messaging app with the numbers filled in, and send.</li>
 </ol>
 <h2>FAQ</h2>
-<p><strong>Do I need an account?</strong> No. There is no login or sign-up.</p>
-<p><strong>Is my data stored?</strong> No. Everything runs on your device; nothing is kept on a server.</p>
-<p><strong>Who sends the messages?</strong> You do, from your own device. The app only pre-fills them.</p>
+${faqHtml(m)}
 <h2>Contact</h2>
 <p>Email <a href="mailto:${contactEmail}">${contactEmail}</a> and we'll help.</p>`;
 
 // root language picker
 function rootPage() {
   const rows = markets
-    .map((m) => `  <li><a href="${m.id}/">${esc(m.appName)}</a> <span class="muted">(${m.hreflang})</span></li>`)
+    .map((m) => `  <li><a href="${m.id}/">${esc(m.appName)}</a> <span class="muted">${esc(m.region)}</span></li>`)
     .join('\n');
+  const jsonld = [
+    { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Realtor Finder', url: `${BASE}/`, publisher: ORG },
+    { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: markets.map((m, i) => ({ '@type': 'ListItem', position: i + 1, name: m.appName, url: `${BASE}/${m.id}/` })) },
+  ];
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Realtor Finder — contact real estate agents at once</title>
-<meta name="description" content="Realtor Finder: search listings by area and contact several real estate agents at once. Available per region.">
+<meta name="description" content="Realtor Finder: free iOS apps to search listings by area and contact several real estate agents at once. No account, nothing stored. Pick your region.">
 <link rel="canonical" href="${BASE}/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Realtor Finder">
+<meta property="og:url" content="${BASE}/">
 ${alternates('')}
+${jsonld.map(ld).join('\n')}
 <style>body{margin:0;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#111}
 @media (prefers-color-scheme:dark){body{background:#111;color:#eee}} main{max-width:640px;margin:0 auto;padding:48px 16px}
 ul{list-style:none;padding:0} li{padding:.5em 0;border-bottom:1px solid #8882} a{color:#0a7cff} .muted{color:#888;font-size:.85em}</style>
 </head>
 <body><main>
 <h1>Realtor Finder</h1>
-<p>Search real-estate listings by area and contact several agents at once. Choose your region:</p>
+<p>Free iOS apps to search real-estate listings by area and contact several agents at once. Choose your region:</p>
 <ul>
 ${rows}
 </ul>
@@ -152,18 +204,50 @@ ${urls.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).joi
 `;
 }
 
+// NOTE: on a GitHub Pages *project* site this file deploys under /realtorfinder/robots.txt,
+// which crawlers do NOT read (only the host root counts). Harmless (default is allow-all),
+// but submit the sitemap via Search Console; a custom domain/root repo makes this authoritative.
+function robots() {
+  const bots = ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'Applebot-Extended'];
+  const blocks = bots.map((b) => `User-agent: ${b}\nAllow: /`).join('\n\n');
+  return `${blocks}\n\nUser-agent: *\nAllow: /\nSitemap: ${BASE}/sitemap.xml\n`;
+}
+
+function llms() {
+  const apps = markets
+    .map((m) => `- [${m.region}](${BASE}/${m.id}/): ${m.appName} — iOS App Store id${m.appleId}`)
+    .join('\n');
+  return `# Realtor Finder
+
+> Free iOS apps to search real-estate listings by area and contact several agents
+> at once. No account, no sign-up, nothing stored on any server, no ads. Messages
+> are sent by the user from their own device. 14 regional apps.
+
+## Apps by region
+${apps}
+
+## Each app includes
+- A privacy policy (\`/<region>/privacy.html\`): no data collected, on-device only.
+- Support & FAQ (\`/<region>/support.html\`): how it works, account/data/messaging questions.
+
+## Contact
+${contactEmail}
+`;
+}
+
 const out = new URL('./dist/', import.meta.url);
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 await writeFile(new URL('./index.html', out), rootPage());
 await writeFile(new URL('./sitemap.xml', out), sitemap());
-await writeFile(new URL('./robots.txt', out), `User-agent: *\nAllow: /\nSitemap: ${BASE}/sitemap.xml\n`);
+await writeFile(new URL('./robots.txt', out), robots());
+await writeFile(new URL('./llms.txt', out), llms());
 let count = 0;
 for (const m of markets) {
   await mkdir(new URL(`./${m.id}/`, out), { recursive: true });
-  await writeFile(new URL(`./${m.id}/index.html`, out), page({ m, kind: '', title: `${m.appName}`, desc: m.tagline, body: landingBody(m) }));
-  await writeFile(new URL(`./${m.id}/privacy.html`, out), page({ m, kind: 'privacy', title: `Privacy Policy — ${m.appName}`, desc: `Privacy policy for ${m.appName}. No data collected.`, body: privacyBody(m) }));
-  await writeFile(new URL(`./${m.id}/support.html`, out), page({ m, kind: 'support', title: `Support — ${m.appName}`, desc: `Support and FAQ for ${m.appName}.`, body: supportBody(m) }));
+  await writeFile(new URL(`./${m.id}/index.html`, out), page({ m, kind: '', title: m.appName, desc: `${m.tagline} — ${m.region}. Free iOS app, no account, nothing stored.`, body: landingBody(m), jsonld: [softwareLd(m)] }));
+  await writeFile(new URL(`./${m.id}/privacy.html`, out), page({ m, kind: 'privacy', title: `Privacy Policy — ${m.appName}`, desc: `Privacy policy for ${m.appName}. No data collected, on-device only.`, body: privacyBody(m) }));
+  await writeFile(new URL(`./${m.id}/support.html`, out), page({ m, kind: 'support', title: `Support — ${m.appName}`, desc: `Support and FAQ for ${m.appName}.`, body: supportBody(m), jsonld: [faqLd(m)] }));
   count += 3;
 }
-console.log(`built ${count + 3} files for ${markets.length} markets -> dist/`);
+console.log(`built ${count + 4} files for ${markets.length} markets -> dist/ (+llms.txt)`);

@@ -2,19 +2,19 @@
   "baseUrl": "https://larsien.github.io/realtorfinder",
   "contactEmail": "kahvilavalas@gmail.com",
   "markets": [
-    { "id": "ar",   "lang": "ar",      "hreflang": "ar",    "dir": "rtl", "appName": "تواصل مع الوسطاء الخليج",    "appleId": "6820799328", "tagline": "تواصل مباشرة مع وسطاء العقارات" },
-    { "id": "es",   "lang": "es",      "hreflang": "es",    "dir": "ltr", "appName": "Contacta Agentes México",       "appleId": "6820799236", "tagline": "Contacta agentes inmobiliarios directamente" },
-    { "id": "esco", "lang": "es",      "hreflang": "es-CO", "dir": "ltr", "appName": "Asesores Inmobiliarios CO",     "appleId": "6820799337", "tagline": "Contacta asesores inmobiliarios en Colombia" },
-    { "id": "esar", "lang": "es",      "hreflang": "es-AR", "dir": "ltr", "appName": "Corredores Inmobiliarios AR",   "appleId": "6820799437", "tagline": "Contactá corredores inmobiliarios en Argentina" },
-    { "id": "vi",   "lang": "vi",      "hreflang": "vi",    "dir": "ltr", "appName": "Liên hệ Môi Giới Việt Nam",     "appleId": "6820799537", "tagline": "Liên hệ trực tiếp với môi giới bất động sản" },
-    { "id": "hk",   "lang": "zh-Hant", "hreflang": "zh-HK", "dir": "ltr", "appName": "一次過聯絡代理 香港",            "appleId": "6820799581", "tagline": "一次過聯絡多位地產代理" },
-    { "id": "ph",   "lang": "en",      "hreflang": "en-PH", "dir": "ltr", "appName": "Realtor Finder Philippines",    "appleId": "6820799583", "tagline": "Contact real estate agents directly" },
-    { "id": "kh",   "lang": "en",      "hreflang": "en-KH", "dir": "ltr", "appName": "Realtor Finder Cambodia",       "appleId": "6820801351", "tagline": "Contact real estate agents in Cambodia" },
-    { "id": "mm",   "lang": "en",      "hreflang": "en-MM", "dir": "ltr", "appName": "Realtor Finder Myanmar",        "appleId": "6820801500", "tagline": "Contact real estate agents in Myanmar" },
-    { "id": "lk",   "lang": "en",      "hreflang": "en-LK", "dir": "ltr", "appName": "Realtor Finder Sri Lanka",      "appleId": "6820799764", "tagline": "Contact real estate agents in Sri Lanka" },
-    { "id": "pk",   "lang": "en",      "hreflang": "en-PK", "dir": "ltr", "appName": "Realtor Finder Pakistan",       "appleId": "6820800556", "tagline": "Contact real estate agents in Pakistan" },
-    { "id": "af",   "lang": "en",      "hreflang": "en",    "dir": "ltr", "appName": "Realtor Finder Africa",         "appleId": "6820800726", "tagline": "Contact real estate agents across Africa" },
-    { "id": "ka",   "lang": "en",      "hreflang": "en-GE", "dir": "ltr", "appName": "Realtor Finder Georgia",        "appleId": "6820800716", "tagline": "Contact real estate agents in Georgia" },
-    { "id": "sr",   "lang": "bs",      "hreflang": "bs-BA", "dir": "ltr", "appName": "Kontaktiraj Agente BiH",        "appleId": "6820800911", "tagline": "Kontaktirajte agente za nekretnine" }
+    { "id": "ar",   "lang": "ar",      "hreflang": "ar",    "dir": "rtl", "appName": "تواصل مع الوسطاء الخليج",    "appleId": "6820799328", "tagline": "تواصل مباشرة مع وسطاء العقارات", "region": "دول الخليج (السعودية، الإمارات، مصر، قطر، البحرين)" },
+    { "id": "es",   "lang": "es",      "hreflang": "es",    "dir": "ltr", "appName": "Contacta Agentes México",       "appleId": "6820799236", "tagline": "Contacta agentes inmobiliarios directamente", "region": "México y Latinoamérica" },
+    { "id": "esco", "lang": "es",      "hreflang": "es-CO", "dir": "ltr", "appName": "Asesores Inmobiliarios CO",     "appleId": "6820799337", "tagline": "Contacta asesores inmobiliarios en Colombia", "region": "Colombia" },
+    { "id": "esar", "lang": "es",      "hreflang": "es-AR", "dir": "ltr", "appName": "Corredores Inmobiliarios AR",   "appleId": "6820799437", "tagline": "Contactá corredores inmobiliarios en Argentina", "region": "Argentina y Uruguay" },
+    { "id": "vi",   "lang": "vi",      "hreflang": "vi",    "dir": "ltr", "appName": "Liên hệ Môi Giới Việt Nam",     "appleId": "6820799537", "tagline": "Liên hệ trực tiếp với môi giới bất động sản", "region": "Việt Nam" },
+    { "id": "hk",   "lang": "zh-Hant", "hreflang": "zh-HK", "dir": "ltr", "appName": "一次過聯絡代理 香港",            "appleId": "6820799581", "tagline": "一次過聯絡多位地產代理", "region": "香港" },
+    { "id": "ph",   "lang": "en",      "hreflang": "en-PH", "dir": "ltr", "appName": "Realtor Finder Philippines",    "appleId": "6820799583", "tagline": "Contact real estate agents directly", "region": "the Philippines" },
+    { "id": "kh",   "lang": "en",      "hreflang": "en-KH", "dir": "ltr", "appName": "Realtor Finder Cambodia",       "appleId": "6820801351", "tagline": "Contact real estate agents in Cambodia", "region": "Cambodia" },
+    { "id": "mm",   "lang": "en",      "hreflang": "en-MM", "dir": "ltr", "appName": "Realtor Finder Myanmar",        "appleId": "6820801500", "tagline": "Contact real estate agents in Myanmar", "region": "Myanmar" },
+    { "id": "lk",   "lang": "en",      "hreflang": "en-LK", "dir": "ltr", "appName": "Realtor Finder Sri Lanka",      "appleId": "6820799764", "tagline": "Contact real estate agents in Sri Lanka", "region": "Sri Lanka" },
+    { "id": "pk",   "lang": "en",      "hreflang": "en-PK", "dir": "ltr", "appName": "Realtor Finder Pakistan",       "appleId": "6820800556", "tagline": "Contact real estate agents in Pakistan", "region": "Pakistan" },
+    { "id": "af",   "lang": "en",      "hreflang": "en",    "dir": "ltr", "appName": "Realtor Finder Africa",         "appleId": "6820800726", "tagline": "Contact real estate agents across Africa", "region": "Kenya and Nigeria" },
+    { "id": "ka",   "lang": "en",      "hreflang": "en-GE", "dir": "ltr", "appName": "Realtor Finder Georgia",        "appleId": "6820800716", "tagline": "Contact real estate agents in Georgia", "region": "Georgia" },
+    { "id": "sr",   "lang": "bs",      "hreflang": "bs-BA", "dir": "ltr", "appName": "Kontaktiraj Agente BiH",        "appleId": "6820800911", "tagline": "Kontaktirajte agente za nekretnine", "region": "Bosna i Hercegovina" }
   ]
 }
