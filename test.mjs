@@ -1,35 +1,44 @@
-// Minimal build check: run `node build.mjs` first, then `node test.mjs`.
+// Build check: run `node build.mjs` first, then `node test.mjs`.
 import { readFile, readdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-const { markets } = JSON.parse(await readFile(new URL('./data/markets.json', import.meta.url)));
+const { baseUrl, markets } = JSON.parse(await readFile(new URL('./data/markets.json', import.meta.url)));
+const BASE = baseUrl.replace(/\/$/, '');
 const dist = new URL('./dist/', import.meta.url);
+const read = (p) => readFile(new URL(p, dist), 'utf8');
+const langBase = (m) => m.lang.split('-')[0];
+let countries = 0;
 
-// every market has 3 pages
 for (const m of markets) {
-  const files = await readdir(new URL(`./${m.id}/`, dist));
-  assert.deepEqual(files.sort(), ['index.html', 'privacy.html', 'support.html'], `${m.id} pages`);
+  // hub has the 3 market-level pages + one dir per country
+  const entries = (await readdir(new URL(`./${m.id}/`, dist))).sort();
+  for (const f of ['index.html', 'privacy.html', 'support.html']) assert.ok(entries.includes(f), `${m.id}/${f}`);
+
+  const hub = await read(`${m.id}/index.html`);
+  // landing cluster on the hub: base lang + one per country + x-default -> hub
+  assert.ok(hub.includes(`hreflang="${langBase(m)}" href="${BASE}/${m.id}/"`), `${m.id} hub generic hreflang`);
+  const xdef = hub.match(/hreflang="x-default" href="([^"]+)"/)[1];
+  assert.equal(xdef, `${BASE}/${m.id}/`, `${m.id} landing x-default -> hub`);
+  assert.ok(hub.includes('"SoftwareApplication"'), `${m.id} hub JSON-LD`);
+
+  for (const c of m.countries) {
+    countries += 1;
+    const cp = await read(`${m.id}/${c.cc}/index.html`);
+    const reg = `${langBase(m)}-${c.cc.toUpperCase()}`;
+    assert.ok(cp.includes(`hreflang="${reg}" href="${BASE}/${m.id}/${c.cc}/"`), `${m.id}/${c.cc} self hreflang ${reg}`);
+    assert.ok(cp.includes(`<link rel="canonical" href="${BASE}/${m.id}/${c.cc}/">`), `${m.id}/${c.cc} canonical`);
+    assert.ok(cp.includes(`id${m.appleId}`), `${m.id}/${c.cc} App Store link`);
+    assert.ok(cp.includes('"areaServed"') && cp.includes(c.name), `${m.id}/${c.cc} areaServed`);
+  }
+  // support FAQPage
+  assert.ok((await read(`${m.id}/support.html`)).includes('"FAQPage"'), `${m.id} FAQPage`);
 }
-// hreflang: one alternate per market + x-default on each page
-const html = await readFile(new URL(`./${markets[0].id}/index.html`, dist), 'utf8');
-const alts = (html.match(/rel="alternate"/g) || []).length;
-assert.equal(alts, markets.length + 1, 'hreflang alternates = markets + x-default');
-assert.ok(html.includes('hreflang="x-default"'), 'x-default present');
-// App Store deep link uses the market's real id
-assert.ok(html.includes(`id${markets[0].appleId}`), 'App Store link');
-// sitemap lists every page (1 root + 3 per market)
-const sm = await readFile(new URL('./sitemap.xml', dist), 'utf8');
-assert.equal((sm.match(/<loc>/g) || []).length, 1 + markets.length * 3, 'sitemap url count');
 
-// JSON-LD: landing has SoftwareApplication, support has FAQPage
-assert.ok(html.includes('"SoftwareApplication"'), 'landing SoftwareApplication JSON-LD');
-const sup = await readFile(new URL(`./${markets[0].id}/support.html`, dist), 'utf8');
-assert.ok(sup.includes('"FAQPage"') && sup.includes('"Question"'), 'support FAQPage JSON-LD');
-// x-default on index points to the site root, not a locale landing page
-const xdef = html.match(/hreflang="x-default" href="([^"]+)"/)[1];
-assert.ok(/\/realtorfinder\/$/.test(xdef), `x-default -> root, got ${xdef}`);
-// llms.txt generated and lists every market
-const ll = await readFile(new URL('./llms.txt', dist), 'utf8');
-for (const m of markets) assert.ok(ll.includes(`id${m.appleId}`), `llms.txt lists ${m.id}`);
+// sitemap: root + 3 per market + 1 per country
+const sm = await read('sitemap.xml');
+assert.equal((sm.match(/<loc>/g) || []).length, 1 + markets.length * 3 + countries, 'sitemap url count');
+// llms.txt lists every app
+const ll = await read('llms.txt');
+for (const m of markets) assert.ok(ll.includes(`id${m.appleId}`), `llms.txt ${m.id}`);
 
-console.log('ok: build output valid');
+console.log(`ok: ${markets.length} markets, ${countries} country pages, build valid`);

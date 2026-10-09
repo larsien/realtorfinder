@@ -48,10 +48,19 @@ array per `m.lang` when translations exist.
 ## URL shape
 
 ```
-/                      language picker (hreflang x-default)
-/<market>/             landing + App Store link
+/                        language/region picker (hreflang x-default)
+/<market>/               market hub: landing + App Store link + country list
+/<market>/<country>/     per-country landing (hreflang <lang>-<CC>)
 /<market>/privacy.html
 /<market>/support.html
 ```
 
-Markets: ar es esco esar vi hk ph kh mm lk pk af ka sr.
+Markets: ar es esco esar vi hk ph kh mm lk pk af ka sr (14 apps, 28 countries).
+
+**hreflang design:** each market's landing is its own reciprocal cluster — the hub
+carries the base language (`es`), each country page a region tag (`es-MX`, `es-CO`…),
+`x-default` → the hub. privacy/support form a separate across-markets cluster.
+Country pages add `areaServed` to their `SoftwareApplication` JSON-LD.
+
+Per-country content lives in `data/markets.json` (`countries: [{cc, name}]`, names
+localized to the market language).
