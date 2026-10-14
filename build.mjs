@@ -290,8 +290,9 @@ ${intro(m, c.name)}`;
 const privacyBody = (m) => {
   const s = tr(m);
   return `<h1>${esc(s.privTitle)}</h1>
-<p class="muted">${esc(m.appName)} · ${esc(s.updated)} 2026-10-09</p>
+<p class="muted">${esc(m.appName)} · ${esc(s.updated)} ${m.id === 'ka' ? '2026-10-14' : '2026-10-09'}</p>
 <p>${s.privLead(m.appName)}</p>
+${m.id === 'ka' ? `<p>This policy covers the Google Play app <strong>უძრავი ქონების აგენტები</strong> (package <code>com.kahvilavalas.realtorfinder.ka</code>), also named <strong>${esc(m.appName)}</strong> on this website. The app is published by <strong>kahvilavalas</strong>.</p>` : ''}
 <h2>${esc(s.locH)}</h2>
 <p>${s.locP}</p>
 <h2>${esc(s.listH)}</h2>
