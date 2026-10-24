@@ -36,9 +36,17 @@ for (const m of markets) {
 
 // sitemap: root + 3 per market + 1 per country
 const sm = await read('sitemap.xml');
-assert.equal((sm.match(/<loc>/g) || []).length, 1 + markets.length * 3 + countries, 'sitemap url count');
+assert.equal((sm.match(/<loc>/g) || []).length, 1 + markets.length * 3 + countries + 3, 'sitemap url count');
 // llms.txt lists every app
 const ll = await read('llms.txt');
 for (const m of markets) assert.ok(ll.includes(`id${m.appleId}`), `llms.txt ${m.id}`);
 
 console.log(`ok: ${markets.length} markets, ${countries} country pages, build valid`);
+
+for (const file of ['index.html', 'privacy.html', 'support.html']) {
+  const html = await read(`unified/${file}`);
+  assert.ok(html.includes('Agent Connect'));
+  assert.ok(html.includes('/unified/privacy.html'));
+  assert.ok(!html.includes('undefined'));
+}
+assert.ok((await read('unified/privacy.html')).includes('country and interface language'));

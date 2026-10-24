@@ -432,6 +432,34 @@ for (const m of markets) {
     files += 1;
   }
 }
+// One consolidated iOS product; existing regional pages continue to serve Android users.
+const unified = { id: 'unified', lang: 'en', dir: 'ltr', appName: 'Agent Connect' };
+const unifiedPages = {
+  'index.html': ['Agent Connect', `<h1>Agent Connect</h1>
+<p>Find property listings and contact local agents in one iPhone app. Choose from 28 supported countries and territories, then choose your interface language independently.</p>
+<p>Local sources, agent terminology and contact options adapt to your selected country. No account, ads or automatic message sending.</p>
+<p>The consolidated iOS app is being prepared for App Store review. Regional Android apps remain separate.</p>
+<h2>Supported countries and territories</h2><p>Argentina, Bahrain, Bosnia and Herzegovina, Cambodia, Colombia, Costa Rica, Dominican Republic, Egypt, El Salvador, Georgia, Guatemala, Honduras, Hong Kong, Kenya, Mexico, Myanmar, Nicaragua, Nigeria, Pakistan, Panama, Paraguay, Philippines, Qatar, Saudi Arabia, Sri Lanka, United Arab Emirates, Uruguay and Vietnam.</p>`],
+  'privacy.html': ['Privacy Policy — Agent Connect', `<h1>Privacy Policy — Agent Connect</h1><p>Updated 2026-10-24. Published by kahvilavalas. This policy covers the consolidated iOS app, bundle ID <code>com.kahvilavalas.realtorfinder.ka</code>, including its localized names such as Contactos Inmobiliarios.</p>
+<h2>Data and preferences</h2><p>We do not operate an app backend that collects your personal information. The app saves only your chosen country and interface language on your device. It does not persist listing results or contact details, and it does not access your address book. Reinstalling the app resets its local preferences.</p>
+<h2>Location</h2><p>Location access is optional and is used to suggest a supported area when you request it. Coordinates may be processed by the operating system geocoding service to identify the area; they are not sent to us.</p>
+<h2>Third-party services</h2><p>Searches request public listings directly from property portals over HTTPS. These services receive normal network request information, such as your IP address and the area or search query sent to them, and operate under their own privacy policies.</p>
+<p>Contact buttons open your phone or messaging app with recipients filled in. You write and send messages yourself. We do not send messages on your behalf or receive their contents.</p>
+<h2>No tracking or advertising</h2><p>No advertising SDKs, analytics or tracking SDKs are included.</p>
+<h2>Contact</h2><p><a href="mailto:${contactEmail}">${contactEmail}</a></p>`],
+  'support.html': ['Support — Agent Connect', `<h1>Support — Agent Connect</h1>
+<ol><li>Choose your country and interface language, then tap Continue.</li><li>Choose a supported city or area. Some sources use a portal filter instead.</li><li>Review the results and tap a contact button to open your messaging or phone app. You send messages yourself.</li><li>Use the globe button to change your country or language. Previous results are cleared when the search screen changes.</li></ol>
+<h2>Settings and availability</h2><p>Your country and language preferences are saved on your device. Search results and contact details are not saved. No account is required. Some portals may be temporarily unavailable or restrict automated access; retry later or choose another supported area.</p>
+<h2>Contact support</h2><p>Email <a href="mailto:${contactEmail}">${contactEmail}</a> with your selected country, app version and a description of the problem. Do not include private messages or unnecessary contact details.</p>`],
+};
+await mkdir(new URL('./unified/', out), { recursive: true });
+for (const [file, [title, body]] of Object.entries(unifiedPages)) {
+  const canonical = `${BASE}/unified/${file === 'index.html' ? '' : file}`;
+  await writeFile(new URL(`./unified/${file}`, out), page({ m: unified, title, desc: title, body, canonical, alt: '' }));
+  urls.push(canonical);
+  files++;
+}
+
 await writeFile(new URL('./index.html', out), rootPage());
 await writeFile(new URL('./sitemap.xml', out), sitemap(urls));
 await writeFile(new URL('./robots.txt', out), robots());
