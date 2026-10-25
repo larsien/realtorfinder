@@ -36,7 +36,7 @@ for (const m of markets) {
 
 // sitemap: root + 3 per market + 1 per country
 const sm = await read('sitemap.xml');
-assert.equal((sm.match(/<loc>/g) || []).length, 1 + markets.length * 3 + countries + 3, 'sitemap url count');
+assert.equal((sm.match(/<loc>/g) || []).length, 1 + markets.length * 3 + countries + 4, 'sitemap url count');
 // llms.txt lists every app
 const ll = await read('llms.txt');
 for (const m of markets) assert.ok(ll.includes(`id${m.appleId}`), `llms.txt ${m.id}`);
@@ -50,3 +50,8 @@ for (const file of ['index.html', 'privacy.html', 'support.html']) {
   assert.ok(!html.includes('undefined'));
 }
 assert.ok((await read('unified/privacy.html')).includes('country and interface language'));
+
+const adPolicy = await read('unified/ads-privacy.html');
+assert.ok(adPolicy.includes('upcoming advertising-enabled'));
+assert.ok(adPolicy.includes('Non-personalized ads still involve data processing'));
+assert.ok(adPolicy.includes('Ad privacy choices'));
