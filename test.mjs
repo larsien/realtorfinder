@@ -52,6 +52,10 @@ for (const file of ['index.html', 'privacy.html', 'support.html']) {
 assert.ok((await read('unified/privacy.html')).includes('country and interface language'));
 
 const adPolicy = await read('unified/ads-privacy.html');
-assert.ok(adPolicy.includes('upcoming advertising-enabled'));
+assert.ok(adPolicy.includes('Agent SMS: Contact Realtors'));
+assert.ok(adPolicy.includes('optional rewarded ads'));
+assert.ok(adPolicy.includes('two additional searches'));
+assert.ok(adPolicy.includes('search while the ad plays'));
+assert.ok(adPolicy.includes('loading screens'));
 assert.ok(adPolicy.includes('Non-personalized ads still involve data processing'));
 assert.ok(adPolicy.includes('Ad privacy choices'));
